@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
 
-// from https://github.com/FaberTheCatgirl/Halo-Infinite-Tag-Editor/blob/master/Halo-Infinite-Tag-Editor/HavokTools/HksOpCodes.cs
+// from https://github.com/Z-15/Halo-Infinite-Tag-Editor/blob/master/Halo-Infinite-Tag-Editor/HavokTools/HksOpCodes.cs
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[repr(u8)]
