@@ -111,8 +111,6 @@ pub struct BungieConstsSection {
 #[derive(BinRead, Debug, Clone)]
 #[br(big)]
 pub struct BungieConstant {
-    // TODO: can be sizes that arent u8?
-
     pub constant_type: u8, // TODO: enum?
 
     #[br(if(constant_type == 1), map = |x: u8| x == 1)]
