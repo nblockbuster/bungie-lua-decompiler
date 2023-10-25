@@ -1,12 +1,14 @@
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
+#![allow(clippy::upper_case_acronyms)]
 
-// from https://github.com/Z-15/Halo-Infinite-Tag-Editor/blob/master/Halo-Infinite-Tag-Editor/HavokTools/HksOpCodes.cs
+// from https://github.com/soupstream/havok-script-tools/blob/master/HavokScriptToolsCommon/HksOpCodes.cs
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 #[repr(u8)]
 pub enum OpCode
 {
+    #[default]
     GETFIELD,
     TEST,
     CALL_I,
@@ -100,12 +102,6 @@ pub enum OpCode
     GETSLOT_D,
     GETGLOBAL_MEM,
     NUM_OPCODES
-}
-
-impl Default for OpCode {
-    fn default() -> Self{
-        OpCode::GETFIELD
-    }
 }
 
 impl From<u8> for OpCode {
@@ -208,33 +204,25 @@ impl From<u8> for OpCode {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OpMode {
+    #[default]
     iABC,
     iABx,
     iAsBx
 }
 
-impl Default for OpMode {
-    fn default() -> Self {
-        OpMode::iABC
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OpArgModeA {
+    #[default]
     UNUSED,
     REG
 }
 
-impl Default for OpArgModeA {
-    fn default() -> Self {
-        OpArgModeA::UNUSED
-    }
-}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OpArgModeBC {
+    #[default]
     UNUSED,
     NUMBER,
     OFFSET,
@@ -243,24 +231,14 @@ pub enum OpArgModeBC {
     CONST
 }
 
-impl Default for OpArgModeBC {
-    fn default() -> Self {
-        OpArgModeBC::UNUSED
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub enum OpArgMode {
+    #[default]
     NUMBER,
     REG,
     CONST
 }
 
-impl Default for OpArgMode {
-    fn default() -> Self {
-        OpArgMode::NUMBER
-    }
-}
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct OpModes {

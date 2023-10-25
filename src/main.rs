@@ -1,12 +1,12 @@
-mod structs;
 mod opcodes;
+mod structs;
 
-use std::path::Path;
-use std::fs::File;
-use std::io::{Cursor, Read};
-use binrw::{BinReaderExt,};
 use crate::opcodes::*;
 use crate::structs::*;
+use binrw::BinReaderExt;
+use std::fs::File;
+use std::io::{Cursor, Read};
+use std::path::Path;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
@@ -38,25 +38,19 @@ fn main() {
     let mut section = parse_lua_section(&mut reader, LuaSectionType::TypeConstants);
     println!("Section: {:#?}", section);
 
-    println!("reader pos: {}", reader.position());
-    section = parse_lua_section(&mut reader, LuaSectionType::Unk1);
-    println!("reader pos: {}", reader.position());
+    // println!("reader pos: {}", reader.position());
+    section = parse_lua_section(&mut reader, LuaSectionType::FunctionBlock);
+    // println!("reader pos: {}", reader.position());
     section = parse_instructions(section);
     println!("Section: {:#?}", section);
 
-    section = parse_lua_section(&mut reader, LuaSectionType::BungieConstants);
-    println!("Section: {:#?}", section);
-    println!("reader pos: {}", reader.position());
-
-    section = parse_lua_section(&mut reader, LuaSectionType::Debug);
-    println!("Section: {:#?}", section);
-    println!("reader pos: {}", reader.position());
+    // println!("reader pos: {}", reader.position());
 }
 
 fn parse_instructions(section: LuaSection) -> LuaSection {
-    let unk1sec = match section {
-        LuaSection::Unk1(s) => s,
-        _ => panic!("Expected UnkSection1"),
+    let mut unk1sec = match section {
+        LuaSection::FunctionBlock(s) => s,
+        _ => panic!("Expected FunctionBlock"),
     };
     let instructions: Vec<LuaInstruction> = unk1sec.instructions;
 
@@ -141,34 +135,33 @@ fn parse_instructions(section: LuaSection) -> LuaSection {
                 }
                 instruction.args.push(OpArg { mode, value });
             }
-        } else {
-            if opmodes.arg_mode_b != OpArgModeBC::UNUSED {
-                let mut value = instruction.raw >> 8 & 0x1ffff;
-                if opmodes.mode == OpMode::iAsBx {
-                    value -= 0xffff;
-                }
-                let mode = match opmodes.arg_mode_b {
-                    OpArgModeBC::OFFSET => OpArgMode::NUMBER,
-                    OpArgModeBC::CONST => OpArgMode::CONST,
-                    _ => OpArgMode::NUMBER,
-                };
-                instruction.args.push(OpArg { mode, value });
+        } else if opmodes.arg_mode_b != OpArgModeBC::UNUSED {
+            let mut value = instruction.raw >> 8 & 0x1ffff;
+            if opmodes.mode == OpMode::iAsBx {
+                value -= 0xffff;
             }
+            let mode = match opmodes.arg_mode_b {
+                OpArgModeBC::OFFSET => OpArgMode::NUMBER,
+                OpArgModeBC::CONST => OpArgMode::CONST,
+                _ => OpArgMode::NUMBER,
+            };
+            instruction.args.push(OpArg { mode, value });
         }
-
 
         new_instructions.push(instruction);
     }
 
-    LuaSection::Unk1(UnkSection1 {
-        unk0: unk1sec.unk0,
-        unk4: unk1sec.unk4,
-        unk8: unk1sec.unk8,
-        unk9: unk1sec.unk9,
-        unk_count: unk1sec.unk_count,
-        unk10: unk1sec.unk10,
-        instructions: new_instructions,
-    })
+    unk1sec.instructions = new_instructions;
+
+    for child in unk1sec.child_functions.iter_mut() {
+        let func_block: FunctionBlock = child.clone().into();
+        let a = parse_instructions(LuaSection::FunctionBlock(Box::new(func_block)));
+        if let LuaSection::FunctionBlock(b) = a {
+            *child = FunctionBlock::into(*b);
+        }
+    }
+
+    LuaSection::FunctionBlock(unk1sec)
 }
 
 fn parse_lua_header(reader: &mut Cursor<Vec<u8>>) -> LuaHeader {
@@ -182,17 +175,9 @@ fn parse_lua_section(reader: &mut Cursor<Vec<u8>>, sec_type: LuaSectionType) -> 
             let section: TypeConstsSection = reader.read_be().unwrap();
             LuaSection::TypeConstants(section)
         }
-        LuaSectionType::Unk1 => {
-            let section: UnkSection1 = reader.read_be().unwrap();
-            LuaSection::Unk1(section)
-        }
-        LuaSectionType::BungieConstants => {
-            let section: BungieConstsSection = reader.read_be().unwrap();
-            LuaSection::BungieConstants(section)
-        }
-        LuaSectionType::Debug => {
-            let section: DebugSection = reader.read_be().unwrap();
-            LuaSection::Debug(section)
+        LuaSectionType::FunctionBlock => {
+            let section: FunctionBlock = reader.read_be().unwrap();
+            LuaSection::FunctionBlock(Box::new(section))
         }
     }
 }
